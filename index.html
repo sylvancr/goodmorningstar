@@ -322,7 +322,7 @@
 
   <!-- Background video -->
   <div class="video-stage" aria-hidden="true">
-    <video id="bgvid" autoplay muted loop playsinline preload="auto">
+    <video id="bgvid" autoplay muted loop playsinline webkit-playsinline preload="auto">
       <source src="assets/background.mp4" type="video/mp4" />
     </video>
   </div>
@@ -369,19 +369,33 @@
   // ── CONFIG: paste your deployed Google Apps Script web app URL here ──
   var GAS_URL = 'https://script.google.com/macros/s/AKfycbyHHnaQstsEFrc7lNj_capkIFfcYqKWquZt3EUxLRfNOs85PHBH1Ji7BuPBO6YyVKWS/exec';
 
-  // Video — autoplay muted; retry on first user interaction if blocked
+  // Video — robust autoplay for mobile (muted + playsinline required)
   var vid = document.getElementById('bgvid');
   vid.muted = true;
-  var tryPlay = function() {
+  vid.setAttribute('muted', ''); // iOS Safari needs this as an attribute too
+
+  function tryPlay() {
     var p = vid.play();
-    if (p && typeof p.catch === 'function') {
-      p.catch(function() {
-        var resume = function() { vid.play().catch(function(){}); window.removeEventListener('click', resume); };
-        window.addEventListener('click', resume, { once: true });
-      });
-    }
-  };
+    if (p instanceof Promise) p.catch(function() {});
+  }
+
+  // Try immediately
   tryPlay();
+
+  // Retry once metadata is ready (key for mobile — video may not be loaded yet)
+  vid.addEventListener('loadedmetadata', tryPlay);
+
+  // Retry on any touch or click (catches mobile browsers that block until interaction)
+  function onInteraction() {
+    if (vid.paused) tryPlay();
+  }
+  document.addEventListener('touchstart', onInteraction, { once: true, passive: true });
+  document.addEventListener('click', onInteraction, { once: true });
+
+  // Restart if page becomes visible again (e.g. returning from another tab)
+  document.addEventListener('visibilitychange', function() {
+    if (!document.hidden && vid.paused) tryPlay();
+  });
 
   // Modal
   var inviteBtn = document.getElementById('inviteBtn');
