@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>An Invitation</title>
+<style>
+  @font-face {
+    font-family: 'Tofth Grotesk Mono';
+    src: url('assets/Tofth-Grotesk-Mono.ttf') format('truetype');
+    font-weight: 400;
+    font-display: swap;
+  }
+  @font-face {
+    font-family: 'Tofth Grotesk Semi Mono';
+    src: url('assets/Tofth-Grotesk-Semi-Mono-Negative-Tracking.ttf') format('truetype');
+    font-weight: 400;
+    font-display: swap;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    height: 100%;
+    overflow: hidden;
+    background: #000;
+    font-family: 'Tofth Grotesk Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+    color: #fff;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  /* ============ VIDEO BACKGROUND ============ */
+  .video-stage {
+    position: fixed;
+    inset: 0;
+    overflow: hidden;
+    z-index: 0;
+  }
+
+  /* Desktop: zoom into the top-right corner of the source, shifted right (past any baked-in
+     black bar) and up. Scale increased to ~242% (was 220%) for an additional 10% zoom-in. */
+  .video-stage video {
+    position: absolute;
+    width: 242%;
+    height: 242%;
+    object-fit: cover;
+    object-position: center;
+    right: -50%;     /* moved 20% back to the left from -70% */
+    left: auto;
+    top: -20%;       /* shift up 20% */
+    bottom: auto;
+    transform: none;
+  }
+
+  /* Mobile: show the 3rd vertical quarter (split video into 4 columns, take the 3rd).
+     Source-width = 400% of viewport, shifted so column 3 (left edge at 50% of source) is visible. */
+  @media (max-width: 768px) {
+    .video-stage video {
+      width: 400%;
+      height: 100%;
+      left: -200%;
+      right: auto;
+      top: 0;
+      transform: none;
+    }
+  }
+
+  /* ============ CENTER CTA ============ */
+  .center-wrap {
+    position: fixed;
+    inset: 0;
+    z-index: 3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+  }
+
+  .invite-cta {
+    pointer-events: auto;
+    background: transparent;
+    border: none;
+    color: #fff;
+    cursor: pointer;
+    padding: 18px 24px;
+    font-family: 'Tofth Grotesk Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.32em;
+    text-transform: uppercase;
+    display: inline-flex;
+    align-items: center;
+    gap: 14px;
+    transition: opacity 0.25s ease, filter 0.25s ease;
+    opacity: 0.95;
+  }
+  .invite-cta.hidden {
+    opacity: 0;
+    filter: blur(8px);
+    pointer-events: none;
+  }
+  .invite-cta:hover { opacity: 1; }
+  .invite-cta:focus-visible { outline: 1px dashed rgba(255,255,255,0.8); outline-offset: 8px; }
+
+  .invite-cta::before,
+  .invite-cta::after {
+    content: '';
+    width: 28px;
+    height: 1px;
+    background: rgba(255,255,255,0.7);
+  }
+
+  /* Entry animation */
+  .invite-cta {
+    animation: fade 1.4s ease 0.2s both;
+  }
+  @keyframes fade { from {opacity:0;} to {opacity:0.95;} }
+
+  /* ============ MODAL ============ */
+  .modal-wrap {
+    position: fixed;
+    inset: 0;
+    z-index: 11;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    pointer-events: none;
+  }
+
+  /* Two-layer modal:
+     .modal-blur     = the wide, soft, edge-feathered blur halo (visual only)
+     .modal-content  = the actual text content, sized normally on top */
+  /* The modal wrapper itself stays at full opacity — children control their own visibility.
+     This keeps the blur layer continuously composited so backdrop-filter never "warms up". */
+  .modal {
+    pointer-events: none;
+    position: relative;
+    width: 100%;
+    max-width: 560px;
+    color: #fff;
+  }
+  .modal.open {
+    pointer-events: auto;
+  }
+
+  /* Text content fades in slightly delayed so blur leads — see .modal-content rule below. */
+
+  /* Blur halo. Simple approach: the element is fixed in shape and the blur strength
+     itself animates from 0px to ~28px via a CSS custom property (registered with @property
+     so it interpolates smoothly). The element has a soft radial mask so its edges always
+     fade to transparent — no hard rectangle, no expanding shape. */
+  @property --b {
+    syntax: '<length>';
+    inherits: false;
+    initial-value: 0px;
+  }
+  .modal-blur {
+    position: absolute;
+    inset: -140px -160px;
+    background: transparent;
+    --b: 0px;
+    backdrop-filter: blur(var(--b));
+    -webkit-backdrop-filter: blur(var(--b));
+    transition: --b 0.9s ease;
+    pointer-events: none;
+    -webkit-mask-image: radial-gradient(ellipse 55% 60% at 50% 50%,
+      #000 0%,
+      rgba(0,0,0,0.92) 40%,
+      rgba(0,0,0,0.65) 60%,
+      rgba(0,0,0,0.3) 78%,
+      rgba(0,0,0,0.1) 90%,
+      transparent 100%);
+            mask-image: radial-gradient(ellipse 55% 60% at 50% 50%,
+      #000 0%,
+      rgba(0,0,0,0.92) 40%,
+      rgba(0,0,0,0.65) 60%,
+      rgba(0,0,0,0.3) 78%,
+      rgba(0,0,0,0.1) 90%,
+      transparent 100%);
+  }
+  .modal.open .modal-blur {
+    --b: 26px;
+  }
+
+  .modal-content {
+    position: relative;
+    padding: 70px 70px 70px;
+    /* tiny text-shadow keeps copy legible without painting a dark box */
+    text-shadow: 0 1px 12px rgba(0,0,0,0.45);
+    opacity: 0;
+    transition: opacity 0.5s ease 0.15s;
+  }
+  .modal.open .modal-content { opacity: 1; }
+
+  .modal-close {
+    position: absolute;
+    top: 14px; right: 14px;
+    width: 28px; height: 28px;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    color: #fff;
+    font-family: 'Tofth Grotesk Mono', monospace;
+    font-size: 18px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: opacity 0.2s;
+    opacity: 0.6;
+  }
+  .modal-close:hover { opacity: 1; }
+
+  .body-copy {
+    font-family: 'Tofth Grotesk Mono', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #fff;
+    text-wrap: pretty;
+  }
+
+  .detail-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 16px;
+    margin-top: 32px;
+    padding-top: 22px;
+    border-top: 1px solid rgba(255,255,255,0.18);
+  }
+  .detail-grid .v {
+    font-family: 'Tofth Grotesk Mono', monospace;
+    font-size: 14px;
+    letter-spacing: 0.04em;
+    color: #fff;
+    font-weight: 400;
+  }
+  .detail-grid .v a {
+    color: inherit;
+    text-decoration: underline;
+    text-decoration-thickness: 1px;
+    text-underline-offset: 3px;
+    transition: opacity 0.2s ease;
+  }
+  .detail-grid .v a:hover { opacity: 0.7; }
+  .detail-grid .item:last-child .v { text-align: right; }
+
+  /* Form */
+  .form {
+    margin-top: 28px;
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+  .form-row {
+    display: flex;
+    border: none;
+    background: transparent;
+    border-bottom: 1px solid rgba(255,255,255,0.35);
+    transition: border-color 0.25s ease;
+  }
+  .form-row:focus-within {
+    border-bottom-color: rgba(255,255,255,0.9);
+  }
+  .form-row input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    padding: 14px 0;
+    font-family: 'Tofth Grotesk Mono', monospace;
+    font-size: 13px;
+    color: #fff;
+    outline: none;
+    letter-spacing: 0.02em;
+    min-width: 0;
+  }
+  .form-row input::placeholder {
+    color: rgba(255,255,255,0.4);
+    letter-spacing: 0.04em;
+  }
+  .form-row button {
+    background: transparent;
+    color: #fff;
+    border: none;
+    padding: 0 0 0 22px;
+    font-family: 'Tofth Grotesk Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.25s;
+    white-space: nowrap;
+    opacity: 0.9;
+  }
+  .form-row button:hover { opacity: 1; }
+  .form-row button:disabled { opacity: 0.5; cursor: progress; }
+
+  .success {
+    margin-top: 18px;
+    font-size: 12px;
+    color: rgba(255,255,255,0.85);
+    line-height: 1.5;
+    display: none;
+  }
+  .success.show { display: block; }
+
+  /* ============ MOBILE ============ */
+  @media (max-width: 600px) {
+    .modal { max-width: 100%; }
+    .modal-content { padding: 50px 30px 50px; }
+    .modal-blur { inset: -90px -90px; }
+    .form-row { flex-direction: column; align-items: flex-start; border-bottom: none; }
+    .form-row input { border-bottom: 1px solid rgba(255,255,255,0.35); width: 100%; }
+    .form-row button { padding: 14px 0 0 0; }
+    .body-copy { font-size: 13px; }
+    .detail-grid .item:last-child .v { text-align: left; }
+  }
+</style>
+</head>
+<body>
+
+  <!-- Background video -->
+  <div class="video-stage" aria-hidden="true">
+    <video id="bgvid" autoplay muted loop playsinline preload="auto">
+      <source src="assets/background.mp4" type="video/mp4" />
+    </video>
+  </div>
+
+  <!-- Center CTA -->
+  <div class="center-wrap">
+    <button class="invite-cta" id="inviteBtn" aria-haspopup="dialog">
+      an invitation
+    </button>
+  </div>
+
+  <!-- Modal (its own backdrop blur — no full-screen scrim) -->
+  <div class="modal-wrap" id="modalWrap" aria-hidden="true">
+    <div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+      <div class="modal-blur" aria-hidden="true"></div>
+      <div class="modal-content">
+        <button class="modal-close" id="modalClose" aria-label="Close">×</button>
+
+        <p class="body-copy" id="modalTitle" style="text-align: left">
+          100% FUSION<br/>
+          Please join us on the peninsula for as long as you would like in July
+        </p>
+
+        <div class="detail-grid">
+          <div class="item"><div class="v">July 12 – 26</div></div>
+          <div class="item"><div class="v"><a href="https://maps.app.goo.gl/CVxN3WwKiQacgJ38A" target="_blank" rel="noopener noreferrer">Stella Matutina</a></div></div>
+        </div>
+
+        <form class="form" id="emailForm" novalidate>
+          <div class="form-row">
+            <input id="emailInput" name="email" type="email" required placeholder="your email" autocomplete="email" />
+            <button type="submit" id="submitBtn">Get full invitation →</button>
+          </div>
+        </form>
+
+        <div class="success" id="success">
+          Thank you. Details on the way to <span id="successEmail"></span>.
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // ── CONFIG: paste your deployed Google Apps Script web app URL here ──
+  var GAS_URL = 'PASTE_YOUR_GAS_WEB_APP_URL_HERE';
+
+  // Video — autoplay muted; retry on first user interaction if blocked
+  var vid = document.getElementById('bgvid');
+  vid.muted = true;
+  var tryPlay = function() {
+    var p = vid.play();
+    if (p && typeof p.catch === 'function') {
+      p.catch(function() {
+        var resume = function() { vid.play().catch(function(){}); window.removeEventListener('click', resume); };
+        window.addEventListener('click', resume, { once: true });
+      });
+    }
+  };
+  tryPlay();
+
+  // Modal
+  var inviteBtn = document.getElementById('inviteBtn');
+  var modal = document.getElementById('modal');
+  var modalWrap = document.getElementById('modalWrap');
+  var closeBtn = document.getElementById('modalClose');
+  var form = document.getElementById('emailForm');
+  var emailInput = document.getElementById('emailInput');
+  var submitBtn = document.getElementById('submitBtn');
+  var success = document.getElementById('success');
+  var successEmail = document.getElementById('successEmail');
+
+  function openModal() {
+    inviteBtn.classList.add('hidden');
+    modal.classList.add('open');
+    modalWrap.setAttribute('aria-hidden', 'false');
+    setTimeout(function() { emailInput.focus({ preventScroll: true }); }, 350);
+  }
+  function closeModal() {
+    modal.classList.remove('open');
+    inviteBtn.classList.remove('hidden');
+    modalWrap.setAttribute('aria-hidden', 'true');
+  }
+  inviteBtn.addEventListener('click', openModal);
+  closeBtn.addEventListener('click', closeModal);
+  modalWrap.addEventListener('click', function(e) {
+    if (e.target === modalWrap) closeModal();
+  });
+  document.addEventListener('keydown', function(e) {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // Form submit — sends to Google Apps Script, appends to Sheet and triggers confirmation email
+  form.addEventListener('submit', function(e) {
+    e.preventDefault();
+    var v = (emailInput.value || '').trim();
+    var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
+    if (!ok) {
+      emailInput.focus();
+      emailInput.style.outline = '1px solid #ff7777';
+      setTimeout(function() { emailInput.style.outline = ''; }, 1200);
+      return;
+    }
+    submitBtn.disabled = true;
+    submitBtn.textContent = 'Sending…';
+
+    // Submit to Google Apps Script (fire-and-forget; no-cors avoids preflight)
+    if (GAS_URL && GAS_URL !== 'PASTE_YOUR_GAS_WEB_APP_URL_HERE') {
+      fetch(GAS_URL, {
+        method: 'POST',
+        mode: 'no-cors',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: 'email=' + encodeURIComponent(v) + '&timestamp=' + encodeURIComponent(new Date().toISOString())
+      }).catch(function() {});
+    }
+
+    // Show success immediately (optimistic UI)
+    setTimeout(function() {
+      successEmail.textContent = v;
+      success.classList.add('show');
+      form.style.display = 'none';
+    }, 700);
+  });
+</script>
+</body>
+</html>
