@@ -38,6 +38,7 @@
     z-index: 0;
   }
 
+  /* Mobile: cover (crop) to fill screen */
   .video-stage img {
     position: absolute;
     inset: 0;
@@ -47,11 +48,10 @@
     object-position: center;
   }
 
-  /* Desktop: zoom out 40% */
+  /* Desktop: contain (no crop) — shows full GIF centred, black fills any gaps */
   @media (min-width: 769px) {
     .video-stage img {
-      transform: scale(0.6);
-      transform-origin: center center;
+      object-fit: contain;
     }
   }
 
@@ -329,19 +329,19 @@
         <button class="modal-close" id="modalClose" aria-label="Close">×</button>
 
         <p class="body-copy" id="modalTitle" style="text-align: left">
-          100% FUSION<br/>
-          Please join us on the peninsula for as long as you would like in July
+          We're delighted to invite you to join us on the peninsula for as long as you would like in July.<br/><br/>
+          Please add your email for more details.
         </p>
 
         <div class="detail-grid">
-          <div class="item"><div class="v">July 12 – 26</div></div>
-          <div class="item"><div class="v"><a href="https://maps.app.goo.gl/CVxN3WwKiQacgJ38A" target="_blank" rel="noopener noreferrer">Stella Matutina</a></div></div>
+          <div class="item"><div class="v">July<br/>12 – 26</div></div>
+          <div class="item"><div class="v"><a href="https://stella.earth" target="_blank" rel="noopener noreferrer">Stella</a></div></div>
         </div>
 
         <form class="form" id="emailForm" novalidate>
           <div class="form-row">
-            <input id="emailInput" name="email" type="email" required placeholder="your email" autocomplete="email" />
-            <button type="submit" id="submitBtn">Get full invitation →</button>
+            <input id="emailInput" name="email" type="email" required placeholder="add your email" autocomplete="email" />
+            <button type="submit" id="submitBtn">Receive full invitation →</button>
           </div>
         </form>
 
