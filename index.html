@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-<title>An Invitation</title>
+<title>Stella Summer Reflection</title>
 <style>
   @font-face {
     font-family: 'Tofth Grotesk Mono';
@@ -36,6 +36,14 @@
     inset: 0;
     overflow: hidden;
     z-index: 0;
+  }
+
+  /* Soft shade so white type reads over the bright footage */
+  .video-stage::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(ellipse 60% 50% at 50% 50%, rgba(0,0,0,0.38), rgba(0,0,0,0.12) 70%, rgba(0,0,0,0.05));
   }
 
   /* Mobile: cover (crop) to fill screen */
@@ -84,6 +92,7 @@
     gap: 14px;
     transition: opacity 0.25s ease, filter 0.25s ease;
     opacity: 0.95;
+    text-shadow: 0 1px 12px rgba(0,0,0,0.35);
   }
   .invite-cta.hidden {
     opacity: 0;
@@ -108,39 +117,36 @@
   @keyframes fade { from {opacity:0;} to {opacity:0.95;} }
 
   /* ============ MODAL ============ */
+  /* Scrolls when the form is taller than the screen. */
   .modal-wrap {
     position: fixed;
     inset: 0;
     z-index: 11;
     display: flex;
-    align-items: center;
+    align-items: safe center;
     justify-content: center;
     padding: 24px;
+    overflow-y: auto;
+    overscroll-behavior: contain;
     pointer-events: none;
   }
+  .modal-wrap.open { pointer-events: auto; }
 
   /* Two-layer modal:
      .modal-blur     = the wide, soft, edge-feathered blur halo (visual only)
      .modal-content  = the actual text content, sized normally on top */
-  /* The modal wrapper itself stays at full opacity — children control their own visibility.
-     This keeps the blur layer continuously composited so backdrop-filter never "warms up". */
   .modal {
     pointer-events: none;
     position: relative;
     width: 100%;
     max-width: 560px;
+    margin: auto 0;
     color: #fff;
   }
   .modal.open {
     pointer-events: auto;
   }
 
-  /* Text content fades in slightly delayed so blur leads — see .modal-content rule below. */
-
-  /* Blur halo. Simple approach: the element is fixed in shape and the blur strength
-     itself animates from 0px to ~28px via a CSS custom property (registered with @property
-     so it interpolates smoothly). The element has a soft radial mask so its edges always
-     fade to transparent — no hard rectangle, no expanding shape. */
   @property --b {
     syntax: '<length>';
     inherits: false;
@@ -211,38 +217,39 @@
     text-wrap: pretty;
   }
 
-  .detail-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 16px;
+  /* Named / anonymous toggle */
+  .toggle {
+    display: flex;
+    gap: 22px;
     margin-top: 32px;
     padding-top: 22px;
     border-top: 1px solid rgba(255,255,255,0.18);
   }
-  .detail-grid .v {
-    font-family: 'Tofth Grotesk Mono', monospace;
-    font-size: 14px;
-    letter-spacing: 0.04em;
+  .toggle button {
+    background: transparent;
+    border: none;
     color: #fff;
-    font-weight: 400;
+    cursor: pointer;
+    padding: 0 0 4px;
+    font-family: 'Tofth Grotesk Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    opacity: 0.45;
+    border-bottom: 1px solid transparent;
+    transition: opacity 0.25s, border-color 0.25s;
   }
-  .detail-grid .v a {
-    color: inherit;
-    text-decoration: underline;
-    text-decoration-thickness: 1px;
-    text-underline-offset: 3px;
-    transition: opacity 0.2s ease;
-  }
-  .detail-grid .v a:hover { opacity: 0.7; }
-  .detail-grid .item:last-child .v { text-align: right; }
+  .toggle button:hover { opacity: 0.8; }
+  .toggle button[aria-pressed="true"] { opacity: 1; border-bottom-color: rgba(255,255,255,0.9); }
 
   /* Form */
   .form {
-    margin-top: 28px;
+    margin-top: 10px;
     display: flex;
     flex-direction: column;
     gap: 0;
   }
+  .form fieldset { border: none; min-width: 0; display: flex; flex-direction: column; }
   .form-row {
     display: flex;
     border: none;
@@ -253,27 +260,85 @@
   .form-row:focus-within {
     border-bottom-color: rgba(255,255,255,0.9);
   }
-  .form-row input {
+  .form-row input,
+  .form-row textarea,
+  .form-row select {
     flex: 1;
     border: none;
     background: transparent;
     padding: 14px 0;
     font-family: 'Tofth Grotesk Mono', monospace;
     font-size: 13px;
+    line-height: 1.6;
     color: #fff;
     outline: none;
     letter-spacing: 0.02em;
     min-width: 0;
+    border-radius: 0;
   }
-  .form-row input::placeholder {
-    color: rgba(255,255,255,0.4);
+  .form-row textarea { resize: vertical; min-height: 6.5em; }
+  .form-row select { appearance: none; -webkit-appearance: none; cursor: pointer; }
+  .form-row select option { color: #000; }
+  .form-row.select::after { content: '↓'; font-size: 11px; align-self: center; opacity: 0.6; pointer-events: none; }
+  .form-row input::placeholder,
+  .form-row textarea::placeholder {
+    color: rgba(255,255,255,0.55);
     letter-spacing: 0.04em;
   }
-  .form-row button {
+  .form-label {
+    margin-top: 18px;
+    font-size: 10px;
+    letter-spacing: 0.22em;
+    text-transform: uppercase;
+    color: rgba(255,255,255,0.6);
+  }
+
+  /* File picker */
+  .drop {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 16px;
+    padding: 14px 0;
+    border-bottom: 1px dashed rgba(255,255,255,0.35);
+    cursor: pointer;
+    font-size: 13px;
+    transition: border-color 0.25s ease;
+  }
+  .drop:hover, .drop.over, .drop:focus-within { border-bottom-color: rgba(255,255,255,0.9); }
+  .drop small { font-size: 11px; color: rgba(255,255,255,0.5); white-space: nowrap; }
+  .drop input { position: absolute; width: 1px; height: 1px; opacity: 0; }
+  .files { list-style: none; font-size: 12px; display: flex; flex-direction: column; gap: 4px; margin-top: 8px; }
+  .files:empty { display: none; }
+  .files li { display: flex; justify-content: space-between; gap: 12px; }
+  .files li span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .files button {
+    background: transparent; border: none; color: #fff; cursor: pointer;
+    font-family: inherit; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.6;
+  }
+  .files button:hover { opacity: 1; }
+
+  .check {
+    display: flex; gap: 10px; align-items: center;
+    margin-top: 16px; font-size: 12px; color: rgba(255,255,255,0.85); cursor: pointer;
+  }
+  .check input { accent-color: #fff; }
+
+  .hp { position: absolute; left: -9999px; width: 1px; height: 1px; overflow: hidden; }
+  [hidden] { display: none !important; }
+
+  .submit-row {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    margin-top: 28px;
+  }
+  .submit-row button {
     background: transparent;
     color: #fff;
     border: none;
-    padding: 0 0 0 22px;
+    padding: 0;
     font-family: 'Tofth Grotesk Mono', monospace;
     font-size: 10px;
     letter-spacing: 0.22em;
@@ -284,28 +349,31 @@
     white-space: nowrap;
     opacity: 0.9;
   }
-  .form-row button:hover { opacity: 1; }
-  .form-row button:disabled { opacity: 0.5; cursor: progress; }
+  .submit-row button:hover { opacity: 1; }
+  .submit-row button:disabled { opacity: 0.5; cursor: progress; }
+  .status { font-size: 11px; color: rgba(255,255,255,0.6); }
+
+  .msg { margin-top: 16px; font-size: 12px; color: #ffb3b3; line-height: 1.5; }
 
   .success {
-    margin-top: 18px;
-    font-size: 12px;
-    color: rgba(255,255,255,0.85);
-    line-height: 1.5;
-    display: none;
+    font-size: 14px;
+    line-height: 1.6;
   }
-  .success.show { display: block; }
+  .success .again {
+    margin-top: 28px;
+    background: transparent; border: none; color: #fff; cursor: pointer; padding: 0;
+    font-family: inherit; font-size: 10px; letter-spacing: 0.22em; text-transform: uppercase; opacity: 0.7;
+  }
+  .success .again:hover { opacity: 1; }
+  .muted { color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 12px; }
 
   /* ============ MOBILE ============ */
   @media (max-width: 600px) {
     .modal { max-width: 100%; }
     .modal-content { padding: 50px 30px 50px; }
     .modal-blur { inset: -90px -90px; }
-    .form-row { flex-direction: column; align-items: flex-start; border-bottom: none; }
-    .form-row input { border-bottom: 1px solid rgba(255,255,255,0.35); width: 100%; }
-    .form-row button { padding: 14px 0 0 0; }
     .body-copy { font-size: 13px; }
-    .detail-grid .item:last-child .v { text-align: left; }
+    .drop { flex-direction: column; gap: 4px; }
   }
 </style>
 </head>
@@ -313,13 +381,13 @@
 
   <!-- Background GIF -->
   <div class="video-stage" aria-hidden="true">
-    <img src="assets/stellazoomcropped.gif" alt="" />
+    <img src="assets/reflection.gif" alt="" />
   </div>
 
   <!-- Center CTA -->
   <div class="center-wrap">
     <button class="invite-cta" id="inviteBtn" aria-haspopup="dialog">
-      open your invitation
+      share your reflection
     </button>
   </div>
 
@@ -330,58 +398,95 @@
       <div class="modal-content">
         <button class="modal-close" id="modalClose" aria-label="Close">×</button>
 
-        <p class="body-copy" id="modalTitle" style="text-align: left">
-          We are delighted to invite you to join us at Stella Matutina this July for our first gathering on the peninsula.<br/><br/>
-          Please add your email below to receive more details.
-        </p>
+        <div id="intro">
+          <p class="body-copy" id="modalTitle">
+            Stella Summer Reflection<br/><br/>
+            What stayed with you from the summer? Send us a few lines, a voice note, a picture or a PDF.
+          </p>
 
-        <div class="detail-grid">
-          <div class="item"><div class="v">July 10 – 31</div></div>
-          <div class="item"><div class="v"><a href="https://stella.earth" target="_blank" rel="noopener noreferrer">Stella</a></div></div>
+          <div class="toggle" role="group" aria-label="How to send">
+            <button type="button" id="tNamed" aria-pressed="true">With my name</button>
+            <button type="button" id="tAnon" aria-pressed="false">Anonymous</button>
+          </div>
         </div>
 
-        <form class="form" id="emailForm" novalidate>
-          <div class="form-row">
-            <input id="emailInput" name="email" type="email" required placeholder="add your email" autocomplete="email" />
-            <button type="submit" id="submitBtn">Receive full invitation →</button>
+        <form class="form" id="form" novalidate>
+          <fieldset id="fs">
+            <div class="form-row named">
+              <input id="name" type="text" placeholder="your name" autocomplete="name" aria-label="Your name" />
+            </div>
+
+            <div class="form-row">
+              <textarea id="words" placeholder="in words: a moment, a person, an idea you took home" aria-label="Your reflection"></textarea>
+            </div>
+
+            <label class="drop" id="drop" for="media">
+              <span>add voice notes, images or PDFs</span>
+              <small>up to 10 files, 10 MB each</small>
+              <input type="file" id="media" accept="audio/*,image/*,application/pdf,.pdf,.m4a" multiple />
+            </label>
+            <ul class="files" id="list"></ul>
+
+            <label class="form-label" for="share">Can we share it?</label>
+            <div class="form-row select">
+              <select id="share"></select>
+            </div>
+
+            <div class="form-row named">
+              <input id="email" type="email" placeholder="your email" autocomplete="email" aria-label="Your email" />
+            </div>
+            <label class="check named" for="news"><input type="checkbox" id="news" checked /> <span>Send me occasional news from Stella</span></label>
+
+            <div class="hp" aria-hidden="true"><label for="website">Leave empty</label><input type="text" id="website" tabindex="-1" autocomplete="off" /></div>
+          </fieldset>
+
+          <p class="msg" id="msg" role="alert" hidden></p>
+
+          <div class="submit-row">
+            <span class="status" id="status" aria-live="polite"></span>
+            <button type="submit" id="send">Send reflection →</button>
           </div>
         </form>
 
-        <div class="success" id="success">
-          Thank you. Details on the way to <span id="successEmail"></span>.
+        <div class="success" id="success" hidden aria-live="polite">
+          <p>Thank you. Your reflection is with us now.</p>
+          <p class="muted" id="thanksMail" hidden></p>
+          <button type="button" class="again" id="again">Send another →</button>
         </div>
       </div>
     </div>
   </div>
 
 <script>
-  // ── CONFIG: paste your deployed Google Apps Script web app URL here ──
-  var GAS_URL = 'https://script.google.com/macros/s/AKfycbyHHnaQstsEFrc7lNj_capkIFfcYqKWquZt3EUxLRfNOs85PHBH1Ji7BuPBO6YyVKWS/exec';
+  // Stella Summer Reflection web app (Google Apps Script). Saves to Drive + Sheet and sends the thank-you email.
+  var GAS_URL = 'https://script.google.com/macros/s/AKfycbx_3Ljs4WokkZ_ww3CIJKb0_TQrgVDqwJ9jdoSSjRYrndXLWWDyaNtjainZ1OQ2fg4L/exec';
+  var MAX_MB = 10, MAX_FILES = 10, MAX_TOTAL_MB = 30;
+  var SHARE = {
+    named: ['Yes, with my name', 'Yes, without my name', 'No, just for you'],
+    anon: ['Yes', 'No, just for you']
+  };
+
+  function $(id) { return document.getElementById(id); }
+  var inviteBtn = $('inviteBtn');
+  var modal = $('modal');
+  var modalWrap = $('modalWrap');
+  var anonymous = false, picked = [];
 
   // Modal
-  var inviteBtn = document.getElementById('inviteBtn');
-  var modal = document.getElementById('modal');
-  var modalWrap = document.getElementById('modalWrap');
-  var closeBtn = document.getElementById('modalClose');
-  var form = document.getElementById('emailForm');
-  var emailInput = document.getElementById('emailInput');
-  var submitBtn = document.getElementById('submitBtn');
-  var success = document.getElementById('success');
-  var successEmail = document.getElementById('successEmail');
-
   function openModal() {
     inviteBtn.classList.add('hidden');
     modal.classList.add('open');
+    modalWrap.classList.add('open');
     modalWrap.setAttribute('aria-hidden', 'false');
-    setTimeout(function() { emailInput.focus({ preventScroll: true }); }, 350);
   }
   function closeModal() {
     modal.classList.remove('open');
+    modalWrap.classList.remove('open');
     inviteBtn.classList.remove('hidden');
     modalWrap.setAttribute('aria-hidden', 'true');
   }
   inviteBtn.addEventListener('click', openModal);
-  closeBtn.addEventListener('click', closeModal);
+  $('modalClose').addEventListener('click', closeModal);
   modalWrap.addEventListener('click', function(e) {
     if (e.target === modalWrap) closeModal();
   });
@@ -389,37 +494,121 @@
     if (e.key === 'Escape') closeModal();
   });
 
-  // Form submit — sends to Google Apps Script, appends to Sheet and triggers confirmation email
-  form.addEventListener('submit', function(e) {
-    e.preventDefault();
-    var v = (emailInput.value || '').trim();
-    var ok = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(v);
-    if (!ok) {
-      emailInput.focus();
-      emailInput.style.outline = '1px solid #ff7777';
-      setTimeout(function() { emailInput.style.outline = ''; }, 1200);
-      return;
-    }
-    submitBtn.disabled = true;
-    submitBtn.textContent = 'Sending…';
+  // Named / anonymous
+  function setMode(anon) {
+    anonymous = anon;
+    $('tNamed').setAttribute('aria-pressed', String(!anon));
+    $('tAnon').setAttribute('aria-pressed', String(anon));
+    document.querySelectorAll('.named').forEach(function(el) { el.hidden = anon; });
+    var sel = $('share'), keep = sel.value;
+    sel.textContent = '';
+    SHARE[anon ? 'anon' : 'named'].forEach(function(o) {
+      var opt = document.createElement('option'); opt.textContent = o; sel.appendChild(opt);
+    });
+    if (keep === 'No, just for you') sel.value = keep;
+  }
+  $('tNamed').addEventListener('click', function() { setMode(false); });
+  $('tAnon').addEventListener('click', function() { setMode(true); });
 
-    // Submit to Google Apps Script (fire-and-forget; no-cors avoids preflight)
-    if (GAS_URL && GAS_URL !== 'PASTE_YOUR_GAS_WEB_APP_URL_HERE') {
-      fetch(GAS_URL, {
-        method: 'POST',
-        mode: 'no-cors',
-        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-        body: 'email=' + encodeURIComponent(v) + '&timestamp=' + encodeURIComponent(new Date().toISOString())
-      }).catch(function() {});
-    }
+  function say(text) { $('msg').textContent = text; $('msg').hidden = !text; }
 
-    // Show success immediately (optimistic UI)
-    setTimeout(function() {
-      successEmail.textContent = v;
-      success.classList.add('show');
-      form.style.display = 'none';
-    }, 700);
+  // Files
+  function size(n) { return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB'; }
+  function render() {
+    var list = $('list'); list.textContent = '';
+    picked.forEach(function(f, i) {
+      var li = document.createElement('li');
+      var s = document.createElement('span'); s.textContent = f.name + ' · ' + size(f.size);
+      var b = document.createElement('button'); b.type = 'button'; b.textContent = 'Remove';
+      b.setAttribute('aria-label', 'Remove ' + f.name);
+      b.addEventListener('click', function() { picked.splice(i, 1); render(); });
+      li.appendChild(s); li.appendChild(b); list.appendChild(li);
+    });
+  }
+  function add(files) {
+    say('');
+    Array.prototype.forEach.call(files, function(f) {
+      var ok = /^(audio|image)\//.test(f.type) || f.type === 'application/pdf' || /\.(pdf|m4a|heic)$/i.test(f.name);
+      if (!ok) return say(f.name + " isn't a voice note, image or PDF.");
+      if (f.size > MAX_MB * 1048576) return say(f.name + ' is larger than ' + MAX_MB + ' MB.');
+      if (picked.some(function(p) { return p.name === f.name && p.size === f.size; })) return;
+      if (picked.length >= MAX_FILES) return say('Up to ' + MAX_FILES + ' files at a time.');
+      picked.push(f);
+    });
+    render();
+  }
+  $('media').addEventListener('change', function() { add($('media').files); $('media').value = ''; });
+  var drop = $('drop');
+  ['dragenter', 'dragover'].forEach(function(t) { drop.addEventListener(t, function(e) { e.preventDefault(); drop.classList.add('over'); }); });
+  ['dragleave', 'drop'].forEach(function(t) { drop.addEventListener(t, function(e) { e.preventDefault(); drop.classList.remove('over'); }); });
+  drop.addEventListener('drop', function(e) { if (e.dataTransfer) add(e.dataTransfer.files); });
+
+  function read(file) {
+    return new Promise(function(resolve, reject) {
+      var r = new FileReader();
+      r.onload = function() {
+        var type = file.type || (/\.pdf$/i.test(file.name) ? 'application/pdf' : /\.m4a$/i.test(file.name) ? 'audio/mp4' : 'application/octet-stream');
+        resolve({ name: file.name, type: type, data: String(r.result).split(',')[1] || '' });
+      };
+      r.onerror = function() { reject(new Error("Couldn't read " + file.name + '.')); };
+      r.readAsDataURL(file);
+    });
+  }
+
+  function busy(on, text) {
+    $('fs').disabled = on; $('send').disabled = on;
+    $('send').textContent = on ? 'Sending…' : 'Send reflection →';
+    $('status').textContent = text || '';
+  }
+
+  function done(email) {
+    $('form').hidden = true; $('intro').hidden = true;
+    $('thanksMail').hidden = !email;
+    if (email) $('thanksMail').textContent = "We've sent a note to " + email + '.';
+    $('success').hidden = false;
+    modalWrap.scrollTop = 0;
+  }
+
+  $('again').addEventListener('click', function() {
+    $('words').value = ''; picked = []; render(); say('');
+    $('success').hidden = true; $('intro').hidden = false; $('form').hidden = false;
+    busy(false); $('words').focus();
   });
+
+  // Submit: plain-text JSON POST (no CORS preflight) to the Apps Script doPost
+  $('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+    if (!$('words').value.trim() && !picked.length) return say('Add some words, a voice note, an image or a PDF first.');
+    var email = anonymous ? '' : $('email').value.trim();
+    if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return say("That email address doesn't look right.");
+    var total = picked.reduce(function(n, f) { return n + f.size; }, 0);
+    if (total > MAX_TOTAL_MB * 1048576) return say('Please keep files under ' + MAX_TOTAL_MB + ' MB in total, or send them in two goes.');
+    say('');
+    busy(true, picked.length ? 'Uploading ' + picked.length + (picked.length === 1 ? ' file' : ' files') + '…' : '');
+
+    Promise.all(picked.map(read)).then(function(encoded) {
+      var payload = {
+        anonymous: anonymous,
+        name: anonymous ? '' : $('name').value, email: email,
+        news: !anonymous && $('news').checked,
+        words: $('words').value, share: $('share').value,
+        website: $('website').value, files: encoded
+      };
+      return fetch(GAS_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      }).then(function(r) { return r.json(); });
+    }).then(function(res) {
+      if (!res || !res.ok) throw new Error(res && res.error ? res.error : 'Something went wrong.');
+      done(res.thanked ? email : '');
+    }).catch(function(err) {
+      busy(false);
+      say((err && err.message ? err.message : 'Something went wrong.') + ' Please try again, or email info@stella.earth.');
+    });
+  });
+
+  setMode(false);
 </script>
 </body>
 </html>
