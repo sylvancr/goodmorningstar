@@ -240,6 +240,7 @@
     transition: opacity 0.25s, border-color 0.25s;
   }
   .toggle button:hover { opacity: 0.8; }
+  .toggle.inline { margin-top: 10px; padding-top: 0; border-top: none; }
   .toggle button[aria-pressed="true"] { opacity: 1; border-bottom-color: rgba(255,255,255,0.9); }
 
   /* Form */
@@ -296,9 +297,8 @@
   /* File picker */
   .drop {
     display: flex;
-    justify-content: space-between;
-    align-items: baseline;
-    gap: 16px;
+    flex-direction: column;
+    gap: 4px;
     padding: 14px 0;
     border-bottom: 1px dashed rgba(255,255,255,0.35);
     cursor: pointer;
@@ -373,7 +373,6 @@
     .modal-content { padding: 50px 30px 50px; }
     .modal-blur { inset: -90px -90px; }
     .body-copy { font-size: 13px; }
-    .drop { flex-direction: column; gap: 4px; }
   }
 </style>
 </head>
@@ -401,7 +400,7 @@
         <div id="intro">
           <p class="body-copy" id="modalTitle">
             Stella Summer Reflection<br/><br/>
-            What stayed with you from the summer? Send us a few lines, a voice note, a picture or a PDF.
+            We are feeling nostalgic, so please share your memories of this summer with us. We will read every single one, of course, and we are also collating a recipe book from the summer that will have reflections and essays scattered between the food. If you would like to be included in that, please submit your response by October 25th.
           </p>
 
           <div class="toggle" role="group" aria-label="How to send">
@@ -417,7 +416,7 @@
             </div>
 
             <div class="form-row">
-              <textarea id="words" placeholder="in words: a moment, a person, an idea you took home" aria-label="Your reflection"></textarea>
+              <textarea id="words" placeholder="your reflections in as many words as you like. people, ideas, proposals, favourite meal etc." aria-label="Your reflection"></textarea>
             </div>
 
             <label class="drop" id="drop" for="media">
@@ -426,6 +425,15 @@
               <input type="file" id="media" accept="audio/*,image/*,application/pdf,.pdf,.m4a" multiple />
             </label>
             <ul class="files" id="list"></ul>
+
+            <span class="form-label" id="recipeLabel">Do you have something specific for the recipe book?</span>
+            <div class="toggle inline" role="group" aria-labelledby="recipeLabel">
+              <button type="button" id="rNo" aria-pressed="true">No</button>
+              <button type="button" id="rYes" aria-pressed="false">Yes</button>
+            </div>
+            <div class="form-row" id="recipeRow" hidden>
+              <textarea id="recipeNote" placeholder="tell us about it here, or which attachments we should look at" aria-label="About your recipe book contribution"></textarea>
+            </div>
 
             <label class="form-label" for="share">Can we share it?</label>
             <div class="form-row select">
@@ -510,6 +518,18 @@
   $('tNamed').addEventListener('click', function() { setMode(false); });
   $('tAnon').addEventListener('click', function() { setMode(true); });
 
+  // Recipe book
+  var recipe = false;
+  function setRecipe(on) {
+    recipe = on;
+    $('rYes').setAttribute('aria-pressed', String(on));
+    $('rNo').setAttribute('aria-pressed', String(!on));
+    $('recipeRow').hidden = !on;
+    if (on) $('recipeNote').focus();
+  }
+  $('rYes').addEventListener('click', function() { setRecipe(true); });
+  $('rNo').addEventListener('click', function() { setRecipe(false); });
+
   function say(text) { $('msg').textContent = text; $('msg').hidden = !text; }
 
   // Files
@@ -570,7 +590,7 @@
   }
 
   $('again').addEventListener('click', function() {
-    $('words').value = ''; picked = []; render(); say('');
+    $('words').value = ''; $('recipeNote').value = ''; setRecipe(false); picked = []; render(); say('');
     $('success').hidden = true; $('intro').hidden = false; $('form').hidden = false;
     busy(false); $('words').focus();
   });
@@ -578,7 +598,8 @@
   // Submit: plain-text JSON POST (no CORS preflight) to the Apps Script doPost
   $('form').addEventListener('submit', function(e) {
     e.preventDefault();
-    if (!$('words').value.trim() && !picked.length) return say('Add some words, a voice note, an image or a PDF first.');
+    var recipeNote = recipe ? $('recipeNote').value : '';
+    if (!$('words').value.trim() && !picked.length && !recipeNote.trim()) return say('Add some words, a voice note, an image or a PDF first.');
     var email = anonymous ? '' : $('email').value.trim();
     if (email && !/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) return say("That email address doesn't look right.");
     var total = picked.reduce(function(n, f) { return n + f.size; }, 0);
@@ -592,6 +613,7 @@
         name: anonymous ? '' : $('name').value, email: email,
         news: !anonymous && $('news').checked,
         words: $('words').value, share: $('share').value,
+        recipe: recipe, recipeNote: recipeNote,
         website: $('website').value, files: encoded
       };
       return fetch(GAS_URL, {
